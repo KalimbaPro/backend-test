@@ -1,12 +1,12 @@
 package main
 
 import (
-	"os"
+	"database/sql"
 	"fmt"
 	"net"
-	"time"
 	"net/http"
-	"database/sql"
+	"os"
+	"time"
 
 	charmLog "github.com/charmbracelet/log"
 	"github.com/gorilla/mux"
