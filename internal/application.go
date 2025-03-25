@@ -78,17 +78,17 @@ func (a *App) getBreed(w http.ResponseWriter, r *http.Request) {
 }
 
 func validBreed(breed *Breed) error {
-	if strings.TrimSpace(breed.Species) == ""{
+	if strings.TrimSpace(breed.Species) == "" {
 		return errors.New("species is required")
 	} else if breed.Species != "dog" && breed.Species != "cat" {
 		return errors.New("species must be either a dog or a cat")
 	}
-	if strings.TrimSpace(breed.PetSize) == ""{
+	if strings.TrimSpace(breed.PetSize) == "" {
 		return errors.New("petSize is required")
 	} else if breed.PetSize != "small" && breed.PetSize != "medium" && breed.PetSize != "tall" {
 		return errors.New("petSize must be either small, medium or tall")
 	}
-	if strings.TrimSpace(breed.Name) == ""{
+	if strings.TrimSpace(breed.Name) == "" {
 		return errors.New("name is required")
 	} else if len(breed.Name) > 80 {
 		return errors.New("name is too long. Cannot exceed 80 characters")
@@ -118,7 +118,6 @@ func (a *App) createBreed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.logger.Debug(newBreed)
 	query := `INSERT INTO breeds (species, pet_size, name, average_male_adult_weight, average_female_adult_weight)
 	          VALUES (?, ?, ?, ?, ?)`
 	result, err := a.DB.Exec(query, newBreed.Species, newBreed.PetSize, newBreed.Name, newBreed.AverageMaleAdultWeight, newBreed.AverageFemaleAdultWeight)
@@ -178,7 +177,7 @@ func (a *App) updateBreed(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Breed updated successfully"})
+	json.NewEncoder(w).Encode(newBreed)
 }
 
 func (a *App) deleteBreed(w http.ResponseWriter, r *http.Request) {
@@ -212,8 +211,6 @@ func (a *App) searchBreed(w http.ResponseWriter, r *http.Request) {
 	species := vars.Get("species")
 	weight := vars.Get("weight")
 
-	a.logger.Info(species)
-	a.logger.Info(weight)
 	var args []any
 	query := "SELECT * FROM breeds WHERE 1=1"
 
@@ -230,8 +227,6 @@ func (a *App) searchBreed(w http.ResponseWriter, r *http.Request) {
 		args = append(args, weight, weight)
 	}
 
-	a.logger.Info(query)
-	a.logger.Info(args)
 	rows, err := a.DB.Query(query, args...)
 	if err != nil {
 		fmt.Println("Error executing query: ", err)

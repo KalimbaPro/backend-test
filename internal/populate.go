@@ -1,27 +1,25 @@
 package internal
 
 import (
-	"os"
-	"io"
-	"fmt"
-	"time"
-	"strconv"
-	"encoding/csv"
 	"database/sql"
+	"encoding/csv"
+	"fmt"
+	"io"
+	"os"
+	"strconv"
+	"time"
 
 	charmLog "github.com/charmbracelet/log"
 )
 
-func ParseCSV(filename string) ([]Breed) {
+func parseCSV(filename string) ([]Breed) {
 	file, err := os.Open(filename)
 	if err != nil {
 		fmt.Println(err)
 	}
-
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-
 	var allBreeds [][]string
 	for {
 		breed, err := reader.Read()
@@ -33,8 +31,9 @@ func ParseCSV(filename string) ([]Breed) {
 		}
 		allBreeds = append(allBreeds, breed)
 	}
+
 	var breeds []Breed
-	for _, line := range allBreeds[1:] {
+	for _, line := range allBreeds[1:] { // Start at line 2 to avoid the fields specifications
 		currentId, err := strconv.Atoi(line[0])
 		if err != nil {
 			fmt.Println("Can't convert this to an int!")
@@ -60,8 +59,9 @@ func ParseCSV(filename string) ([]Breed) {
 	return breeds
 }
 
+func PopulateDatabase(filename string, db *sql.DB) error {
+	breeds := parseCSV(filename)
 
-func PopulateDatabase(breeds []Breed, db *sql.DB) error {
 	logger := charmLog.NewWithOptions(os.Stderr, charmLog.Options{
 		Formatter:       charmLog.TextFormatter,
 		ReportCaller:    true,
@@ -71,14 +71,19 @@ func PopulateDatabase(breeds []Breed, db *sql.DB) error {
 		Level:           charmLog.DebugLevel,
 	})
 
+	var isError bool
+	var err error
 	for index, breed := range breeds {
 		query := "INSERT INTO breeds(id, species, pet_size, name, average_male_adult_weight, average_female_adult_weight) VALUES(?, ?, ?, ?, ?, ?)"
 
-		_, err := db.Exec(query, breed.Id, breed.Species, breed.PetSize, breed.Name, breed.AverageMaleAdultWeight, breed.AverageFemaleAdultWeight)
+		_, err = db.Exec(query, breed.Id, breed.Species, breed.PetSize, breed.Name, breed.AverageMaleAdultWeight, breed.AverageFemaleAdultWeight)
 		if err != nil {
-			logger.Error("Populate stop at: ", index)
-			return err
+			isError = true
+			logger.Errorf("Populate error at: %d", index)
 		}
+	}
+	if isError {
+		return err
 	}
 	return nil
 }

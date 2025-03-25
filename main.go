@@ -57,10 +57,9 @@ func main() {
 
 	logger.Info("Database connected")
 
-	breeds := internal.ParseCSV("breeds.csv")
-	err = internal.PopulateDatabase(breeds, db)
+	err = internal.PopulateDatabase("breeds.csv", db)
 	if err != nil {
-		logger.Error("Error while populating the database : %v", err)
+		logger.Errorf("Error while populating the database : %v", err)
 	} else {
 		logger.Info("Database populated")
 	}
