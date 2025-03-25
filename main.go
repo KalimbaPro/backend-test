@@ -1,12 +1,12 @@
 package main
 
 import (
-	"database/sql"
+	"os"
 	"fmt"
 	"net"
-	"net/http"
-	"os"
 	"time"
+	"net/http"
+	"database/sql"
 
 	charmLog "github.com/charmbracelet/log"
 	"github.com/gorilla/mux"
@@ -57,7 +57,15 @@ func main() {
 
 	logger.Info("Database connected")
 
-	app := internal.NewApp(logger)
+	breeds := internal.ParseCSV("breeds.csv")
+	err = internal.PopulateDatabase(breeds, db)
+	if err != nil {
+		logger.Error("Error while populating the database : %v", err)
+	} else {
+		logger.Info("Database populated")
+	}
+
+	app := internal.NewApp(logger, db)
 
 	r := mux.NewRouter()
 	app.RegisterRoutes(r.PathPrefix("/v1").Subrouter())
@@ -66,11 +74,14 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	}).Methods(http.MethodGet)
 
+	logger.Info("Starting the CRUD application...")
 	err = http.ListenAndServe(
 		net.JoinHostPort("", ApiPort),
 		r,
 	)
-
+	if err != nil {
+		logger.Errorf("they were an error: %v", err)
+	}
 	// =============================== Starting Msg ===============================
 	logger.Info(fmt.Sprintf("Service started and listen on port %s", ApiPort))
 }

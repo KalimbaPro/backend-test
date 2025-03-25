@@ -13,7 +13,7 @@ services:
     volumes:
       - .:/app
   mysql-test:
-    platform: linux/arm64
+    # platform: linux/arm64 I have commented this line because I did the test on WSL
     build: ./.docker-compose/mysql
     container_name: mysql-test
     environment:
@@ -34,7 +34,7 @@ services:
     ports:
       - 53306:3306
   pma-test:
-    image: arm64v8/phpmyadmin:latest
+    image: phpmyadmin:latest #same here because I'm on WSL arm64v8 is not working
     container_name: pma-test
     ports:
       - 63306:80
